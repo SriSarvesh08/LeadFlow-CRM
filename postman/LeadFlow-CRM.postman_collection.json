@@ -1,0 +1,369 @@
+{
+  "info": {
+    "name": "LeadFlow CRM (Auth & Leads)",
+    "description": "Postman collection for LeadFlow CRM Auth Service (Week 2) and Leads Service (Week 4). Set baseUrl to http://localhost:5000/api (via Gateway) or http://localhost:5001 / http://localhost:5002 for direct service testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" }
+  ],
+  "item": [
+    {
+      "name": "Auth Service (Week 2)",
+      "item": [
+        {
+          "name": "1. Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@leadflow.in\",\n  \"password\": \"REPLACE_WITH_SEEDED_PASSWORD\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Expected 200: { success: true, data: { user, accessToken, refreshToken } }. 401 on invalid credentials."
+          }
+        },
+        {
+          "name": "2. Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Expected 200: { success: true, data: { accessToken, refreshToken } }. Rotates refresh token."
+          }
+        },
+        {
+          "name": "3. Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@leadflow.in\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/forgot",
+            "description": "Expected 200: Reset link dispatched (or logged in console in dev simulation mode)."
+          }
+        },
+        {
+          "name": "4. Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPass@123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/reset",
+            "description": "Expected 200: Password reset successfully. Reusing the same token returns 401."
+          }
+        },
+        {
+          "name": "5. Get Current User (/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Expected 200: Current user profile with role and permissions. 401 without token."
+          }
+        },
+        {
+          "name": "6. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/logout",
+            "description": "Expected 200: Logged out and refresh token revoked."
+          }
+        },
+        {
+          "name": "7. List Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users?page=1&limit=20",
+            "description": "Requires users:read. Expected 200 with paginated users and meta."
+          }
+        },
+        {
+          "name": "8. Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Requires users:read. Expected 200 (or 404 if not found, 422 if non-integer ID)."
+          }
+        },
+        {
+          "name": "9. Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Executive\",\n  \"email\": \"test.exec@leadflow.in\",\n  \"password\": \"ExecPass@123\",\n  \"role_id\": 3,\n  \"manager_id\": 2,\n  \"is_active\": true\n}"
+            },
+            "url": "{{baseUrl}}/users",
+            "description": "Requires users:create. Expected 201. Returns 422 on duplicate email or invalid manager_id."
+          }
+        },
+        {
+          "name": "10. Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Executive Updated\",\n  \"is_active\": true\n}"
+            },
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Requires users:update. Expected 200."
+          }
+        },
+        {
+          "name": "11. List Roles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/roles",
+            "description": "Requires settings:read. Expected 200 with all roles and their permissions."
+          }
+        },
+        {
+          "name": "12. List All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/roles/all-permissions",
+            "description": "Requires settings:read. Expected 200."
+          }
+        },
+        {
+          "name": "13. Get Role Permissions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/roles/{{roleId}}/permissions",
+            "description": "Requires settings:read. Expected 200."
+          }
+        },
+        {
+          "name": "14. Update Role Permissions",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionCodes\": [\"leads:read\", \"leads:create\", \"leads:update\"]\n}"
+            },
+            "url": "{{baseUrl}}/roles/{{roleId}}/permissions",
+            "description": "Requires settings:update. Expected 200. Rejects unknown codes with 422."
+          }
+        },
+        {
+          "name": "15. Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/audit-logs?page=1&limit=25",
+            "description": "Requires audit:read. Expected 200."
+          }
+        },
+        {
+          "name": "16. Get Settings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/settings",
+            "description": "Requires settings:read. Expected 200."
+          }
+        },
+        {
+          "name": "17. Update Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_name\": \"LeadFlow CRM Pvt Ltd\",\n  \"company_gstin\": \"27AABCU9603R1ZM\"\n}"
+            },
+            "url": "{{baseUrl}}/settings",
+            "description": "Requires settings:update. Expected 200."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leads Service (Week 4)",
+      "item": [
+        {
+          "name": "1. Public Lead Form (No Auth)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Sharma\",\n  \"email\": \"priya@acme.in\",\n  \"phone\": \"9876543210\",\n  \"company\": \"Acme Tech\",\n  \"companySize\": \"medium\",\n  \"message\": \"Interested in CRM demo\"\n}"
+            },
+            "url": "{{baseUrl}}/public/lead-form",
+            "description": "Public endpoint. Expected 201 with leadId."
+          }
+        },
+        {
+          "name": "2. List Leads (Filter, Search, Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/leads?page=1&limit=20&status=new",
+            "description": "Requires leads:read. Expected 200 with data array and meta."
+          }
+        },
+        {
+          "name": "3. Create Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Arjun Mehta\",\n  \"email\": \"arjun@zenith.in\",\n  \"phone\": \"9811122233\",\n  \"company\": \"Zenith Systems\",\n  \"source\": \"Referral\"\n}"
+            },
+            "url": "{{baseUrl}}/leads",
+            "description": "Requires leads:create. Expected 201 with auto-calculated score and assignedTo."
+          }
+        },
+        {
+          "name": "4. Get Lead by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/leads/{{leadId}}",
+            "description": "Requires leads:read. Expected 200."
+          }
+        },
+        {
+          "name": "5. Update Lead",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company\": \"Zenith Systems Pvt Ltd\",\n  \"source\": \"Website\"\n}"
+            },
+            "url": "{{baseUrl}}/leads/{{leadId}}",
+            "description": "Requires leads:update. Expected 200 with recalculated score."
+          }
+        },
+        {
+          "name": "6. Change Lead Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"qualified\"\n}"
+            },
+            "url": "{{baseUrl}}/leads/{{leadId}}/status",
+            "description": "Requires leads:update. lostReason is mandatory when status is 'lost'."
+          }
+        },
+        {
+          "name": "7. Assign Lead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTo\": 3\n}"
+            },
+            "url": "{{baseUrl}}/leads/{{leadId}}/assign",
+            "description": "Requires leads:assign. Expected 200."
+          }
+        },
+        {
+          "name": "8. Convert Lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealTitle\": \"Zenith Annual License\",\n  \"dealAmount\": 120000,\n  \"expectedClose\": \"2026-12-15\"\n}"
+            },
+            "url": "{{baseUrl}}/leads/{{leadId}}/convert",
+            "description": "Requires leads:convert. Calls Customers & Sales internal routes."
+          }
+        },
+        {
+          "name": "9. Export Leads CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/leads/export",
+            "description": "Requires leads:export. Expected 200 text/csv download."
+          }
+        },
+        {
+          "name": "10. Import Leads CSV",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": "" }]
+            },
+            "url": "{{baseUrl}}/leads/import",
+            "description": "Requires leads:import. Upload a .csv file under key 'file'."
+          }
+        },
+        {
+          "name": "11. Delete Lead",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/leads/{{leadId}}",
+            "description": "Requires leads:delete. Expected 200."
+          }
+        }
+      ]
+    }
+  ]
+}
+
