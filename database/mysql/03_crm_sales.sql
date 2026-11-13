@@ -127,7 +127,3 @@ CREATE TABLE IF NOT EXISTS targets (
     amount DECIMAL(12,2),
     PRIMARY KEY (user_id, month)
 );
-
--- Required indexes
-CREATE INDEX idx_invoices_status ON invoices(status);
-CREATE INDEX idx_deals_stage ON deals(stage);
