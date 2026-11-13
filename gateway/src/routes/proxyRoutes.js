@@ -11,10 +11,27 @@ const router = express.Router();
  * @param {object} pathRewrite - Path rewrite mapping
  */
 const buildProxy = (targetUrl, serviceName, pathRewrite = {}) => {
+  const rewriteFn = (path, req) => {
+    if (typeof pathRewrite === 'function') {
+      return pathRewrite(path, req);
+    }
+    const originalPath = req.originalUrl || path;
+    if (pathRewrite && typeof pathRewrite === 'object' && Object.keys(pathRewrite).length > 0) {
+      for (const [pattern, replacement] of Object.entries(pathRewrite)) {
+        const regex = new RegExp(pattern);
+        if (regex.test(originalPath)) {
+          return originalPath.replace(regex, replacement);
+        }
+      }
+      return originalPath;
+    }
+    return originalPath.replace(/^\/api/, '') || '/';
+  };
+
   return createProxyMiddleware({
     target: targetUrl,
     changeOrigin: true,
-    pathRewrite,
+    pathRewrite: rewriteFn,
     on: {
       proxyReq: (proxyReq, req) => {
         // Pass authenticated user context headers downstream
@@ -28,7 +45,7 @@ const buildProxy = (targetUrl, serviceName, pathRewrite = {}) => {
         }
 
         // Restream request body for POST/PUT/PATCH requests if parsed by express.json()
-        if (req.body && Object.keys(req.body).length > 0) {
+        if (req.body && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
           const bodyData = JSON.stringify(req.body);
           proxyReq.setHeader('Content-Type', 'application/json');
           proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
