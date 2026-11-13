@@ -1,6 +1,8 @@
 
-CREATE DATABASE IF NOT EXISTS crm_sales;
+-- LeadFlow CRM - Sales Database
+-- Database: crm_sales
 
+CREATE DATABASE IF NOT EXISTS crm_sales;
 USE crm_sales;
 
 -- 1. Products
@@ -34,7 +36,13 @@ CREATE TABLE IF NOT EXISTS deal_products (
     product_id INT,
     qty INT,
     price DECIMAL(12,2),
-    PRIMARY KEY (deal_id, product_id)
+    PRIMARY KEY (deal_id, product_id),
+
+    CONSTRAINT fk_deal_products_deal
+        FOREIGN KEY (deal_id) REFERENCES deals(id),
+
+    CONSTRAINT fk_deal_products_product
+        FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
 -- 4. Quotes
@@ -45,7 +53,10 @@ CREATE TABLE IF NOT EXISTS quotes (
     account_id INT,
     status ENUM('draft','sent','accepted','rejected') DEFAULT 'draft',
     valid_until DATE,
-    total DECIMAL(12,2)
+    total DECIMAL(12,2),
+
+    CONSTRAINT fk_quotes_deal
+        FOREIGN KEY (deal_id) REFERENCES deals(id)
 );
 
 -- 5. Quote Items
@@ -55,7 +66,13 @@ CREATE TABLE IF NOT EXISTS quote_items (
     product_id INT,
     qty INT,
     price DECIMAL(12,2),
-    gst_rate DECIMAL(4,2)
+    gst_rate DECIMAL(4,2),
+
+    CONSTRAINT fk_quote_items_quote
+        FOREIGN KEY (quote_id) REFERENCES quotes(id),
+
+    CONSTRAINT fk_quote_items_product
+        FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
 -- 6. Invoices
@@ -71,7 +88,10 @@ CREATE TABLE IF NOT EXISTS invoices (
     total DECIMAL(12,2),
     amount_paid DECIMAL(12,2) DEFAULT 0,
     status ENUM('draft','pending','partially_paid','paid','overdue','cancelled')
-        DEFAULT 'draft'
+        DEFAULT 'draft',
+
+    CONSTRAINT fk_invoices_quote
+        FOREIGN KEY (quote_id) REFERENCES quotes(id)
 );
 
 -- 7. Invoice Items
@@ -81,7 +101,10 @@ CREATE TABLE IF NOT EXISTS invoice_items (
     description VARCHAR(200),
     qty INT,
     price DECIMAL(12,2),
-    gst_rate DECIMAL(4,2)
+    gst_rate DECIMAL(4,2),
+
+    CONSTRAINT fk_invoice_items_invoice
+        FOREIGN KEY (invoice_id) REFERENCES invoices(id)
 );
 
 -- 8. Payments
@@ -92,7 +115,9 @@ CREATE TABLE IF NOT EXISTS payments (
     mode ENUM('upi','bank','cheque','cash'),
     reference VARCHAR(60),
     paid_on DATE,
-    FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+
+    CONSTRAINT fk_payments_invoice
+        FOREIGN KEY (invoice_id) REFERENCES invoices(id)
 );
 
 -- 9. Targets
@@ -102,3 +127,7 @@ CREATE TABLE IF NOT EXISTS targets (
     amount DECIMAL(12,2),
     PRIMARY KEY (user_id, month)
 );
+
+-- Required indexes
+CREATE INDEX idx_invoices_status ON invoices(status);
+CREATE INDEX idx_deals_stage ON deals(stage);
