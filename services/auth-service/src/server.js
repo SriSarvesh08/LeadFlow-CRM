@@ -2,6 +2,7 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = require('./app');
+const { sequelize } = require('./config/db');
 
 const PORT = process.env.PORT || 5001;
 
@@ -17,8 +18,13 @@ const startServer = () => {
       if (isShuttingDown) return;
       isShuttingDown = true;
       console.log(`[auth-service] Received ${signal}. Shutting down gracefully...`);
-      server.close(() => {
+      server.close(async () => {
         console.log('[auth-service] Server closed.');
+        try {
+          await sequelize.close();
+        } catch (error) {
+          console.error(`[auth-service] Error closing MySQL connection: ${error.message}`);
+        }
         process.exit(0);
       });
     };
