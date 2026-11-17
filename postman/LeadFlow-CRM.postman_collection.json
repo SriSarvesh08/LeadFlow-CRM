@@ -214,6 +214,14 @@
             "url": "{{baseUrl}}/settings",
             "description": "Requires settings:update. Expected 200."
           }
+        },
+        {
+          "name": "Auth Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{authDirectUrl}}/health",
+            "description": "Checks whether the Auth service is operational."
+          }
         }
       ]
     },
@@ -361,9 +369,69 @@
             "url": "{{baseUrl}}/leads/{{leadId}}",
             "description": "Requires leads:delete. Expected 200."
           }
+        },
+        {
+          "name": "Leads Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{leadsDirectUrl}}/health",
+            "description": "Checks whether the Leads service is operational."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Checks (Week 1)",
+      "item": [
+        {
+          "name": "Customers Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{customersDirectUrl}}/health",
+            "description": "Checks whether the Customers service is operational."
+          }
+        },
+        {
+          "name": "Sales Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{salesDirectUrl}}/health",
+            "description": "Checks whether the Sales service is operational."
+          }
+        },
+        {
+          "name": "Activity Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{activityDirectUrl}}/health",
+            "description": "Checks whether the Activity service is operational."
+          }
+        },
+        {
+          "name": "Support Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{supportDirectUrl}}/health",
+            "description": "Checks whether the Support service is operational."
+          }
+        },
+        {
+          "name": "Notification Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{notificationDirectUrl}}/health",
+            "description": "Checks whether the Notification service is operational."
+          }
+        },
+        {
+          "name": "API Gateway Health",
+          "request": {
+            "method": "GET",
+            "url": "{{gatewayBaseUrl}}/health",
+            "description": "Checks whether the API Gateway is operational."
+          }
         }
       ]
     }
   ]
 }
-

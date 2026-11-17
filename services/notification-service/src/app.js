@@ -3,10 +3,11 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const express = require('express');
 const cors = require('cors');
+const { createCorsOptions } = require('../../../shared');
 
 const app = express();
 
-app.use(cors());
+app.use(cors(createCorsOptions()));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

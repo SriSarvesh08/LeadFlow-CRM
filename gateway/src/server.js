@@ -26,7 +26,16 @@ const startGateway = () => {
     if (isShuttingDown) return;
     isShuttingDown = true;
     console.log(`[api-gateway] Received ${signal}. Shutting down gracefully...`);
-    server.close(() => {
+    server.close((error) => {
+      if (error) {
+        console.error('[api-gateway] Error closing Gateway server:', {
+          code: error.code,
+          message: error.message,
+        });
+        process.exit(1);
+        return;
+      }
+
       console.log('[api-gateway] Gateway server closed.');
       process.exit(0);
     });
@@ -39,5 +48,7 @@ const startGateway = () => {
 if (require.main === module) {
   startGateway();
 }
+
+app.startGateway = startGateway;
 
 module.exports = app;

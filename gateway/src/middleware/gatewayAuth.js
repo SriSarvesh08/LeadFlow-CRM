@@ -25,7 +25,7 @@ const PUBLIC_ROUTES = [
  */
 const gatewayAuth = (req, res, next) => {
   // Check if current path matches any whitelisted public route
-  const isPublic = PUBLIC_ROUTES.some((route) => req.originalUrl.startsWith(route));
+  const isPublic = PUBLIC_ROUTES.includes(req.path);
   if (isPublic) {
     return next();
   }
@@ -68,4 +68,3 @@ const gatewayAuth = (req, res, next) => {
 };
 
 module.exports = gatewayAuth;
-

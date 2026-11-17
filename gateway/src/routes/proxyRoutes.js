@@ -53,12 +53,14 @@ const buildProxy = (targetUrl, serviceName, pathRewrite = {}) => {
         }
       },
       error: (err, req, res) => {
-        console.error(`[api-gateway] Error proxying to ${serviceName}:`, err.message);
+        console.error(`[api-gateway] Error proxying to ${serviceName}:`, {
+          code: err.code,
+          message: err.message,
+        });
         if (!res.headersSent) {
           res.status(503).json({
             success: false,
-            message: `Service '${serviceName}' is currently unreachable. Please try again shortly.`,
-            error: err.code || err.message,
+            message: 'A downstream service is currently unavailable. Please try again shortly.',
           });
         }
       },

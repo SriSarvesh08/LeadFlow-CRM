@@ -12,6 +12,7 @@ const {
 } = require('./AppError');
 const createLogger = require('./logger');
 const errorHandler = require('./errorHandler');
+const createCorsOptions = require('./corsOptions');
 
 module.exports = {
   sendSuccess,
@@ -23,5 +24,5 @@ module.exports = {
   ForbiddenError,
   createLogger,
   errorHandler,
+  createCorsOptions,
 };
-

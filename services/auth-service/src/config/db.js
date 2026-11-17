@@ -29,14 +29,21 @@ const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   },
 });
 
+const getErrorSummary = (error) => {
+  const cause = error && (error.original || error.parent || error.cause);
+  const code = (error && error.code) || (cause && cause.code);
+  const name = (error && error.name) || 'Error';
+  return code ? `${name} (${code})` : name;
+};
+
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
     console.log(`[auth-service] MySQL connected successfully to '${dbName}' on ${dbHost}:${dbPort}`);
     return true;
   } catch (error) {
-    console.error(`[auth-service] MySQL connection failed: ${error.message}`);
-    return false;
+    console.error(`[auth-service] MySQL connection failed: ${getErrorSummary(error)}`);
+    throw error;
   }
 };
 

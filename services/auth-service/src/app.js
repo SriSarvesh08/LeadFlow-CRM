@@ -3,11 +3,12 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const express = require('express');
 const cors = require('cors');
+const { createCorsOptions, errorHandler } = require('../../../shared');
 
 const app = express();
 
 // Standard middleware
-app.use(cors());
+app.use(cors(createCorsOptions()));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -22,13 +23,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Minimal Week 1 error handler
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
-  res.status(err.statusCode || 500).json({
-    success: false,
-    message: err.message || 'Internal server error',
-  });
-});
+// Centralized error handler
+app.use(errorHandler);
 
 module.exports = app;

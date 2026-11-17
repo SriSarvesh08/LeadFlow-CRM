@@ -20,10 +20,6 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`[notification-service] MongoDB connection failed: ${error.message}`);
-    if (process.env.NODE_ENV === 'test') {
-      console.warn('[notification-service] Running in test mode without live MongoDB');
-      return null;
-    }
     throw error;
   }
 };

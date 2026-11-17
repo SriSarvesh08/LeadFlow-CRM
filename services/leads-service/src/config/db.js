@@ -15,11 +15,6 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`[leads-service] MongoDB connection failed: ${error.message}`);
-    // In local unit tests or offline environments, avoid crashing
-    if (process.env.NODE_ENV === 'test') {
-      console.warn('[leads-service] Running in test mode without live MongoDB');
-      return null;
-    }
     throw error;
   }
 };
