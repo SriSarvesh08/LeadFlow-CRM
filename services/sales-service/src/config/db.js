@@ -1,0 +1,55 @@
+/**
+ * Database connection configuration for Sales Service.
+ * Connects to MySQL (crm_sales) via Sequelize.
+ */
+const { Sequelize } = require('sequelize');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+const dbHost = process.env.DB_HOST;
+const dbPort = parseInt(process.env.DB_PORT || '3306', 10);
+const dbName = process.env.DB_NAME;
+const dbUser = process.env.DB_USER;
+const dbPassword = process.env.DB_PASSWORD;
+
+const missingVars = ['DB_HOST', 'DB_NAME', 'DB_USER'].filter((key) => !process.env[key]);
+if (missingVars.length > 0) {
+  throw new Error(`[sales-service] Missing required MySQL environment variables: ${missingVars.join(', ')}`);
+}
+
+const sequelize = new Sequelize(dbName, dbUser, dbPassword ?? '', {
+  host: dbHost,
+  port: dbPort,
+  dialect: 'mysql',
+  logging: process.env.NODE_ENV === 'development' ? (msg) => console.log(`[SQL]: ${msg}`) : false,
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+  define: {
+    timestamps: true,
+    underscored: true,
+  },
+});
+
+const getErrorSummary = (error) => {
+  const cause = error && (error.original || error.parent || error.cause);
+  const code = (error && error.code) || (cause && cause.code);
+  const name = (error && error.name) || 'Error';
+  return code ? `${name} (${code})` : name;
+};
+
+const testConnection = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log(`[sales-service] MySQL connected successfully to '${dbName}' on ${dbHost}:${dbPort}`);
+    return true;
+  } catch (error) {
+    console.error(`[sales-service] MySQL connection failed: ${getErrorSummary(error)}`);
+    throw error;
+  }
+};
+
+module.exports = { sequelize, testConnection };

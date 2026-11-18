@@ -1,0 +1,27 @@
+/**
+ * Database connection configuration for Notification Service.
+ * Connects to MongoDB (crm_notify) via Mongoose.
+ */
+const mongoose = require('mongoose');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+const connectDB = async () => {
+  try {
+    const mongoUri = process.env.MONGO_URI;
+    if (!mongoUri) {
+      throw new Error('[notification-service] Missing required environment variable: MONGO_URI');
+    }
+
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    console.log(`[notification-service] MongoDB connected successfully: ${conn.connection.host}/${conn.connection.name}`);
+    return conn;
+  } catch (error) {
+    console.error(`[notification-service] MongoDB connection failed: ${error.message}`);
+    throw error;
+  }
+};
+
+module.exports = connectDB;

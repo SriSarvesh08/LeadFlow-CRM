@@ -1,0 +1,423 @@
+services:
+  gateway:
+    image: leadflow-gateway:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: gateway
+        SERVICE_PORT: "5000"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the Compose environment}
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      AUTH_SERVICE_URL: http://auth-service:5001
+      LEADS_SERVICE_URL: http://leads-service:5002
+      CUSTOMERS_SERVICE_URL: http://customers-service:5003
+      SALES_SERVICE_URL: http://sales-service:5004
+      ACTIVITY_SERVICE_URL: http://activity-service:5005
+      SUPPORT_SERVICE_URL: http://support-service:5006
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    ports:
+      - "127.0.0.1:5000:5000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  auth-service:
+    image: leadflow-auth:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/auth-service
+        SERVICE_PORT: "5001"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5001"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: ${DB_USER_AUTH:?Set DB_USER_AUTH to an owner-provisioned MySQL account}
+      DB_PASSWORD: ${DB_PASSWORD_AUTH:?Set DB_PASSWORD_AUTH for the owner-provisioned MySQL account}
+      DB_NAME: crm_auth
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the Compose environment}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      FROM_EMAIL: ${FROM_EMAIL:-noreply@leadflow.in}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5001:5001"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  # MongoDB application users must be provisioned by the database owner.
+  # URI-encode each application username and password before supplying it.
+  leads-service:
+    image: leadflow-leads:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/leads-service
+        SERVICE_PORT: "5002"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5002"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      MONGO_URI: "mongodb://${MONGO_LEADS_USER:?Set MONGO_LEADS_USER to an owner-provisioned account}:${MONGO_LEADS_PASSWORD:?Set MONGO_LEADS_PASSWORD for that account}@mongodb:27017/crm_leads?authSource=crm_leads"
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the Compose environment}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      CUSTOMERS_SERVICE_URL: http://customers-service:5003
+      SALES_SERVICE_URL: http://sales-service:5004
+      ACTIVITY_SERVICE_URL: http://activity-service:5005
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5002:5002"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5002/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  customers-service:
+    image: leadflow-customers:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/customers-service
+        SERVICE_PORT: "5003"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5003"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: ${DB_USER_CUSTOMERS:?Set DB_USER_CUSTOMERS to an owner-provisioned MySQL account}
+      DB_PASSWORD: ${DB_PASSWORD_CUSTOMERS:?Set DB_PASSWORD_CUSTOMERS for the owner-provisioned MySQL account}
+      DB_NAME: crm_customers
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      ACTIVITY_SERVICE_URL: http://activity-service:5005
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5003:5003"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5003/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  sales-service:
+    image: leadflow-sales:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/sales-service
+        SERVICE_PORT: "5004"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5004"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: ${DB_USER_SALES:?Set DB_USER_SALES to an owner-provisioned MySQL account}
+      DB_PASSWORD: ${DB_PASSWORD_SALES:?Set DB_PASSWORD_SALES for the owner-provisioned MySQL account}
+      DB_NAME: crm_sales
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      ACTIVITY_SERVICE_URL: http://activity-service:5005
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5004:5004"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5004/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  activity-service:
+    image: leadflow-activity:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/activity-service
+        SERVICE_PORT: "5005"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5005"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      MONGO_URI: "mongodb://${MONGO_ACTIVITY_USER:?Set MONGO_ACTIVITY_USER to an owner-provisioned account}:${MONGO_ACTIVITY_PASSWORD:?Set MONGO_ACTIVITY_PASSWORD for that account}@mongodb:27017/crm_activity?authSource=crm_activity"
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5005:5005"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5005/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  support-service:
+    image: leadflow-support:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/support-service
+        SERVICE_PORT: "5006"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5006"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      MONGO_URI: "mongodb://${MONGO_SUPPORT_USER:?Set MONGO_SUPPORT_USER to an owner-provisioned account}:${MONGO_SUPPORT_PASSWORD:?Set MONGO_SUPPORT_PASSWORD for that account}@mongodb:27017/crm_support?authSource=crm_support"
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      ACTIVITY_SERVICE_URL: http://activity-service:5005
+      NOTIFICATION_SERVICE_URL: http://notification-service:5007
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5006:5006"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5006/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  notification-service:
+    image: leadflow-notification:week1
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: services/notification-service
+        SERVICE_PORT: "5007"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000,mode=0700
+    environment:
+      NODE_ENV: production
+      PORT: "5007"
+      FRONTEND_URL: ${FRONTEND_URL:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      MONGO_URI: "mongodb://${MONGO_NOTIFICATION_USER:?Set MONGO_NOTIFICATION_USER to an owner-provisioned account}:${MONGO_NOTIFICATION_PASSWORD:?Set MONGO_NOTIFICATION_PASSWORD for that account}@mongodb:27017/crm_notify?authSource=crm_notify"
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      FROM_EMAIL: ${FROM_EMAIL:-noreply@leadflow.in}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5007:5007"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:5007/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD for the MySQL container}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping --host=127.0.0.1 --user=root --password="$${MYSQL_ROOT_PASSWORD}" --silent
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - backend
+
+  mongodb:
+    image: mongo:8.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?Set MONGO_ROOT_USERNAME for MongoDB initialization}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD for MongoDB initialization}
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet --host 127.0.0.1
+          --username "$$MONGO_INITDB_ROOT_USERNAME"
+          --password "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin
+          --eval "if (db.adminCommand('ping').ok !== 1) quit(1)"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - backend
+
+volumes:
+  mysql-data:
+  mongodb-data:
+
+networks:
+  backend:
+    driver: bridge

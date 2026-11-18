@@ -1,0 +1,32 @@
+{
+  "name": "leadflow-crm",
+  "version": "1.0.0",
+  "description": "LeadFlow CRM — Medium-scale CRM with 7 microservices",
+  "private": true,
+  "scripts": {
+    "start:gateway": "cd gateway && npm start",
+    "start:auth": "cd services/auth-service && npm start",
+    "start:leads": "cd services/leads-service && npm start",
+    "start:customers": "cd services/customers-service && npm start",
+    "start:sales": "cd services/sales-service && npm start",
+    "start:activity": "cd services/activity-service && npm start",
+    "start:support": "cd services/support-service && npm start",
+    "start:notifications": "cd services/notification-service && npm start",
+    "dev:gateway": "cd gateway && npm run dev",
+    "dev:auth": "cd services/auth-service && npm run dev",
+    "dev:leads": "cd services/leads-service && npm run dev",
+    "dev:customers": "cd services/customers-service && npm run dev",
+    "dev:sales": "cd services/sales-service && npm run dev",
+    "dev:activity": "cd services/activity-service && npm run dev",
+    "dev:support": "cd services/support-service && npm run dev",
+    "dev:notifications": "cd services/notification-service && npm run dev"
+  },
+  "keywords": [
+    "crm",
+    "microservices",
+    "nodejs",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC"
+}
