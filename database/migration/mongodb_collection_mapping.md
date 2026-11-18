@@ -55,7 +55,8 @@
 - Preserve existing document `_id` values.
 - Import each JSON file into its corresponding database and collection.
 - Recreate required indexes after importing the documents.
-- Preserve the unique email index on `crm_leads.leads`.
+- Create a non-unique index on `crm_leads.leads.email` for faster email searches.
+- The Leads service must check for duplicate leads using email and phone before creating a new lead.
 - Configure separate application users with `readWrite` permissions on their respective databases.
 - Do not delete or overwrite existing local databases or Docker volumes.
 - Verify document counts and indexes after migration.
