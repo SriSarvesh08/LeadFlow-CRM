@@ -4,6 +4,8 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const { createCorsOptions, errorHandler } = require('../../../shared');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
@@ -22,6 +24,10 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Authentication and User management routes
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 
 // Centralized error handler
 app.use(errorHandler);
